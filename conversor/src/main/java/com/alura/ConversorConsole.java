@@ -1,8 +1,13 @@
 package com.alura;
 
 import java.util.Scanner;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.reflect.TypeToken;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,6 +28,9 @@ public class ConversorConsole {
     private List<String> historialConversiones = new ArrayList<>();
     private static final String TIMESTAMP_FORMAT = "dd-MM-yyyy HH:mm:ss";
     private static final String HISTORIAL_FILE = "historial_conversiones.txt";
+    private static final String HISTORIAL_FILE_JSON = "historial_conversiones.json";
+
+    
 
     @SuppressWarnings("resource")
     public void startCurrencyConverter() {
@@ -65,6 +73,19 @@ public class ConversorConsole {
         scanner.close();
     }
     
+
+    public void mostrarHistorialConversiones() {
+        cargarHistorialDesdeJSON();
+    
+        System.out.println("\n===== Historial de Conversiones =====");
+        for (String registro : historialConversiones) {
+            System.out.println(registro);
+        }
+    
+        guardarHistorialEnJSON(); // Guardar el historial actualizado en JSON
+    }
+    
+
 
     private String seleccionarMoneda(Scanner scanner, String tipo) {
         System.out.println("\n===== Seleccionar Moneda de " + tipo + " =====");
@@ -123,8 +144,7 @@ public class ConversorConsole {
     }
     
 
-    private void realizarConversion(Properties properties, String codigoOrigen, String codigoDestino, double monto) {
-        String apiUrl = properties.getProperty("api.url");
+    private void realizarConversion(Properties properties, String codigoOrigen, String codigoDestino, double monto) {        String apiUrl = properties.getProperty("api.url");
         String apiKey = properties.getProperty("api.key");
 
         try {
@@ -187,37 +207,23 @@ public class ConversorConsole {
         return String.format("[%s] %.2f %s = %.2f %s", timestamp, monto, monedas.get(codigoOrigen), monto, monedas.get(codigoDestino));
     }
 
-    private void cargarHistorial() {
-        try (BufferedReader reader = new BufferedReader(new FileReader(HISTORIAL_FILE))) {
-            String linea;
-            while ((linea = reader.readLine()) != null) {
-                historialConversiones.add(linea);
-            }
+
+    private void cargarHistorialDesdeJSON() {
+        try (Reader reader = new FileReader(HISTORIAL_FILE_JSON)) {
+            Gson gson = new Gson();
+            historialConversiones = gson.fromJson(reader, new TypeToken<List<String>>() {}.getType());
         } catch (IOException e) {
-            System.err.println("Error al cargar el historial de conversiones: " + e.getMessage());
+            System.err.println("Error al cargar el historial desde JSON: " + e.getMessage());
         }
     }
-
-    private void guardarHistorial() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(HISTORIAL_FILE))) {
-            for (String registro : historialConversiones) {
-                writer.write(registro);
-                writer.newLine();
-            }
+    
+    private void guardarHistorialEnJSON() {
+        try (Writer writer = new FileWriter(HISTORIAL_FILE_JSON)) {
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            gson.toJson(historialConversiones, writer);
         } catch (IOException e) {
-            System.err.println("Error al guardar el historial de conversiones: " + e.getMessage());
+            System.err.println("Error al guardar el historial en JSON: " + e.getMessage());
         }
-    }
-
-    public void mostrarHistorialConversiones() {
-        cargarHistorial();
-
-        System.out.println("\n===== Historial de Conversiones =====");
-        for (String registro : historialConversiones) {
-            System.out.println(registro);
-        }
-
-        guardarHistorial(); // Guardar el historial actualizado
     }
 
 }
