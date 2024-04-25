@@ -422,3 +422,173 @@ public class ConversorConsole {
     }
 }
 */
+/*
+
+import java.util.Scanner;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
+
+public class Conversor {
+
+    private static final String API_URL = "https://v6.exchangerate-api.com/v6/";
+
+    private static final Map<String, String> monedas = new HashMap<>();
+
+    static {
+        monedas.put("ARS", "Peso argentino");
+        monedas.put("BOB", "Boliviano boliviano");
+        monedas.put("BRL", "Real brasileño");
+        monedas.put("CLP", "Peso chileno");
+        monedas.put("COP", "Peso colombiano");
+        monedas.put("USD", "Dólar estadounidense");
+    }
+
+    public void startCurrencyConverter() {
+        Scanner scanner = new Scanner(System.in);
+
+        while (true) {
+            System.out.println("\n===== Conversor de Monedas =====");
+            System.out.println("1. Seleccionar Moneda de Origen");
+            System.out.println("2. Seleccionar Moneda de Destino");
+            System.out.println("3. Realizar Conversión");
+            System.out.println("4. Salir");
+            System.out.print("Seleccione una opción: ");
+
+            int opcion = scanner.nextInt();
+
+            switch (opcion) {
+                case 1:
+                    seleccionarMoneda("origen");
+                    break;
+                case 2:
+                    seleccionarMoneda("destino");
+                    break;
+                case 3:
+                    realizarConversion();
+                    break;
+                case 4:
+                    System.out.println("Saliendo del programa...");
+                    scanner.close();
+                    return;
+                default:
+                    System.out.println("Opción inválida. Intente de nuevo.");
+            }
+        }
+    }
+
+    private void seleccionarMoneda(String tipo) {
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("\n===== Seleccionar Moneda de " + tipo + " =====");
+        System.out.println("Elija una moneda:");
+
+        int index = 1;
+        for (String nombre : monedas.values()) {
+            System.out.println(index + ". " + nombre);
+            index++;
+        }
+
+        System.out.print("Ingrese el número de la moneda: ");
+        int seleccion = scanner.nextInt();
+
+        if (seleccion >= 1 && seleccion <= monedas.size()) {
+            int monedaIndex = seleccion - 1;
+            String[] monedaArray = monedas.keySet().toArray(new String[0]);
+            String codigoMoneda = monedaArray[monedaIndex];
+
+            if (tipo.equals("origen")) {
+                System.out.println("Moneda de origen seleccionada: " + monedas.get(codigoMoneda));
+            } else {
+                System.out.println("Moneda de destino seleccionada: " + monedas.get(codigoMoneda));
+            }
+        } else {
+            System.out.println("Selección inválida. Intente de nuevo.");
+        }
+    }
+
+    private void realizarConversion() {
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("\n===== Realizar Conversión =====");
+
+        String codigoOrigen = obtenerCodigoPorNombre("origen");
+        String codigoDestino = obtenerCodigoPorNombre("destino");
+
+        if (codigoOrigen != null && codigoDestino != null) {
+            System.out.print("Ingrese el monto a convertir de " + codigoOrigen + " a " + codigoDestino + ": ");
+            double monto = scanner.nextDouble();
+
+            try {
+                URL url = new URL(API_URL + "edfc1752376623b9854b8b39/latest/" + codigoOrigen);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
+
+                int responseCode = connection.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+                    reader.close();
+
+                    JsonObject jsonResponse = JsonParser.parseString(response.toString()).getAsJsonObject();
+
+                    if (jsonResponse.get("result").getAsString().equals("success")) {
+                        double tasaConversion = jsonResponse.getAsJsonObject("conversion_rates").get(codigoDestino).getAsDouble();
+                        double resultado = monto * tasaConversion;
+
+                        System.out.printf("%.2f %s = %.2f %s%n", monto, codigoOrigen, resultado, codigoDestino);
+                    } else {
+                        System.out.println("Error: No se pudo obtener las tasas de conversión.");
+                    }
+                } else {
+                    System.out.println("Error: No se pudo conectar con la API de tasas de cambio.");
+                }
+            } catch (IOException e) {
+                System.out.println("Error de conexión: " + e.getMessage());
+            }
+        } else {
+            System.out.println("Error: No se pudo encontrar el código para alguna de las monedas seleccionadas.");
+        }
+    }
+
+    private String obtenerCodigoPorNombre(String tipo) {
+        Scanner scanner = new Scanner(System.in);
+
+        String mensaje = (tipo.equals("origen")) ? "origen" : "destino";
+        System.out.println("\n===== Seleccionar Moneda de " + mensaje + " =====");
+        System.out.println("Elija una moneda:");
+
+        int index = 1;
+        for (String nombre : monedas.values()) {
+            System.out.println(index + ". " + nombre);
+            index++;
+        }
+
+        System.out.print("Ingrese el número de la moneda de " + mensaje + ": ");
+        int seleccion = scanner.nextInt();
+
+        if (seleccion >= 1 && seleccion <= monedas.size()) {
+            int monedaIndex = seleccion - 1;
+            String[] monedaArray = monedas.keySet().toArray(new String[0]);
+            return monedaArray[monedaIndex];
+        } else {
+            System.out.println("Selección inválida. Intente de nuevo.");
+            return null;
+        }
+    }
+
+    public static void main(String[] args) {
+        new Conversor().startCurrencyConverter();
+    }
+}
+ */
