@@ -29,5 +29,4 @@ public class DatosMonedas {
     public static Map<String, String> getMonedas() {
         return monedas;
     }
-
 }
