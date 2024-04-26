@@ -27,7 +27,6 @@ public class ConversorConsole {
     private static final Map<String, String> monedas = DatosMonedas.getMonedas();
     private List<String> historialConversiones = new ArrayList<>();
     private static final String TIMESTAMP_FORMAT = "dd-MM-yyyy HH:mm:ss";
-    private static final String HISTORIAL_FILE = "historial_conversiones.txt";
     private static final String HISTORIAL_FILE_JSON = "historial_conversiones.json";
 
     
@@ -89,7 +88,6 @@ public class ConversorConsole {
 
     private String seleccionarMoneda(Scanner scanner, String tipo) {
         System.out.println("\n===== Seleccionar Moneda de " + tipo + " =====");
-        System.out.println("Elija una moneda o escriba 'salir' para terminar:");
 
         int index = 1;
         for (String nombre : monedas.values()) {
@@ -122,7 +120,6 @@ public class ConversorConsole {
     }
 
     private void realizarNuevaConversion(Scanner scanner, Properties properties) {
-        System.out.println("\n===== Selección de Monedas =====");
         String codigoOrigen = seleccionarMoneda(scanner, "origen");
         if (codigoOrigen == null) {
             System.out.println("Saliendo del programa...");
@@ -135,13 +132,36 @@ public class ConversorConsole {
             return;
         }
     
-        System.out.print("Ingrese la cantidad a convertir de " + monedas.get(codigoOrigen) + " a " + monedas.get(codigoDestino) + ": ");
+        if (existeConversionEnHistorial(codigoOrigen, codigoDestino)) {
+            System.out.println("Ya existe una conversión registrada de " + monedas.get(codigoOrigen) +
+                               " a " + monedas.get(codigoDestino));
+            return;
+        }
+    
+        System.out.print("Ingrese la cantidad a convertir de " + monedas.get(codigoOrigen) +
+                         " a " + monedas.get(codigoDestino) + ": ");
         double monto = scanner.nextDouble();
     
         realizarConversion(properties, codigoOrigen, codigoDestino, monto);
     
         historialConversiones.add(generarRegistroConversion(codigoOrigen, codigoDestino, monto));
     }
+    
+    private boolean existeConversionEnHistorial(String codigoOrigen, String codigoDestino) {
+        for (String registro : historialConversiones) {
+            String[] partes = registro.split("=");
+            String origenDestino = partes[0].trim();
+            String[] monedas = origenDestino.split(" ");
+            String monedaOrigen = monedas[1];
+            String monedaDestino = monedas[3];
+    
+            if (monedaOrigen.equals(codigoOrigen) && monedaDestino.equals(codigoDestino)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
     
 
     private void realizarConversion(Properties properties, String codigoOrigen, String codigoDestino, double monto) {        String apiUrl = properties.getProperty("api.url");
@@ -174,6 +194,7 @@ public class ConversorConsole {
                     String registro = generarRegistroConversion(codigoOrigen, codigoDestino, monto);
                     historialConversiones.add(registro); // Agregar al historial
 
+                    System.out.println("\n===== Resultado de la Conversión =====");
                     System.out.printf("%.2f %s = %.2f %s%n", monto, monedas.get(codigoOrigen), resultado, monedas.get(codigoDestino));
                 } else {
                     System.out.println("Error: No se pudo obtener las tasas de conversión.");
@@ -211,15 +232,35 @@ public class ConversorConsole {
     private void cargarHistorialDesdeJSON() {
         try (Reader reader = new FileReader(HISTORIAL_FILE_JSON)) {
             Gson gson = new Gson();
-            historialConversiones = gson.fromJson(reader, new TypeToken<List<String>>() {}.getType());
+            List<String> loadedHistorial = gson.fromJson(reader, new TypeToken<List<String>>() {}.getType());
+    
+            // Limpiar duplicados antes de asignar al historialConversiones
+            for (String registro : loadedHistorial) {
+                String[] partes = registro.split("=");
+                String origenDestino = partes[0].trim();
+                if (!existeConversionEnHistorial(origenDestino)) {
+                    historialConversiones.add(registro);
+                }
+            }
         } catch (IOException e) {
             System.err.println("Error al cargar el historial desde JSON: " + e.getMessage());
         }
     }
     
+    private boolean existeConversionEnHistorial(String origenDestino) {
+        for (String registro : historialConversiones) {
+            if (registro.startsWith(origenDestino)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
     private void guardarHistorialEnJSON() {
         try (Writer writer = new FileWriter(HISTORIAL_FILE_JSON)) {
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    
+            // Convertir historialConversiones en un JSON y guardar
             gson.toJson(historialConversiones, writer);
         } catch (IOException e) {
             System.err.println("Error al guardar el historial en JSON: " + e.getMessage());
