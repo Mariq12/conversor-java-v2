@@ -26,8 +26,9 @@ Java - Configurar Visual Studio Code y Maven
 ---
 
 ## Requisitos
-Java 17.
-Acceso a una API de tasas de cambio compatible y configurada correctamente en api.properties.
+    Java 17.
+    
+    Acceso a una API de tasas de cambio compatible y configurada correctamente en api.properties.
 
 ## Descarga de Maven
 
